@@ -1,0 +1,19 @@
+.btnDiv {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 90vh;
+    align-items: center;
+}
+.startBtn {
+    height: 15vh;
+}
+.loginDiv {
+    color: black;
+}
+.chatting {
+    width: 94%;
+}
+.chatResult {
+    width: 100%;
+}

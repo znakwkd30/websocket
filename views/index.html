@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>socketio redis store</title>
+    <link href="css/uikit.css" rel="stylesheet" />
+    <link href="css/uikit.min.css" rel="stylesheet" />
+    <link href="css/uikit-rtl.css" rel="stylesheet" />
+    <link href="css/uikit-rtl.min.css" rel="stylesheet" />
+    <link href="index.css" rel="stylesheet" />
+    <script type="text/javascript" src="js/uikit.js"></script>
+    <script type="text/javascript" src="js/uikit.min.js"></script>
+    <script type="text/javascript" src="js/uikit-icons.js"></script>
+    <script type="text/javascript" src="js/uikit-icons.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript">
+        var socket = io.connect('http://localhost:3065');
+        var name;
+        $(document).ready(function(){
+            socket.on('connected', function(){
+                console.log('connected');
+            });
+           
+            // 매칭완료되었을 때
+            socket.on('completeMatch', function(data){
+                console.log('completeMatch!');
+                $('.lobby').hide();
+                $('.wait').hide();
+                $('.chat').show();
+            });
+           
+            // 대화를 받았을 때
+            socket.on('receiveMessage', function(data){
+                if(name == data.name)
+                    $('.chatResult').append('<div style="width: 100%"><div class="chat-log uk-card uk-card-small uk-card-primary uk-card-hover uk-card-body uk-light" style="margin-top:5px; width:50.1%; height:100px; float:left; position:relative">' + data.name + ' : ' + data.message + '</div></div>');
+                else {
+                    $('.chatResult').append('<div style="width: 100%"><div class="chat-log uk-card uk-card-small uk-card-default uk-card-hover uk-card-body uk-light" style="color:black; margin-top:5px; width:50.1%; height:100px; float:right; position:relative">' + data.name + ' : ' + data.message + '</div></div>');
+                }
+            });
+
+            // 상대방이 나갔을 때 나도 같이 로비로 나감.
+            socket.on('disconnect', function(data){
+                console.log('disconnect');
+                $('.lobby').show();
+                $('.chat').hide();
+            });
+           
+            socket.on("login", function(data) {
+                $(".chatResult").append("<div class='uk-card uk-card-small uk-card-default uk-card-hover uk-card-body uk-light loginDiv'><strong>" + data + "</strong>님이 접속하셨어요.</div>");
+            });
+
+            // 랜덤요청 시
+            $('#btnRequestRandomChat').click(function(){
+                $('.lobby').hide();
+                $('.wait-nav').hide();
+                $('.wait').show();
+                name = prompt("익명으로 사용하실 이름을 입력해주세요");
+                socket.emit('requestRandomChat');
+                socket.emit("login", {
+                    name: name,
+                });
+            });
+           
+            // 요청 취소 시
+            $('#btnCancelRequest').click(function(){
+                $('.lobby').show();
+                $('.wait-nav').show();
+                $('.wait').hide();
+                $('.chat').hide();
+                socket.emit('cancelRequest');
+            });
+           
+            // 엔터입력 시
+            $('#inputMessage').keyup(function(e){
+                if (e.keyCode == 13){
+                    send();
+                }
+            });
+            // 채팅 내용 전송 시
+            $('#btnChat').click(function(){
+                send();
+            });
+        });
+       
+        function send(){
+            var message = $('#inputMessage').val();
+            if (message.length < 1){
+                alert('내용을 입력하세요.');
+                return;
+            }
+            socket.emit('sendMessage', {message:message});
+            $('#inputMessage').val('');
+        }
+    </script>
+</head>
+<body>
+    <div class="wait-nav">
+        <h1 style="font-family: 궁서체; justify-content: center; display: flex;">익명채팅방에 오신걸 환영합니다</h1>
+    </div>
+    <div class="lobby btnDiv">
+        <button id="btnRequestRandomChat" class="uk-button uk-button-primary uk-button-large startBtn">채팅입장</button>
+    </div>
+    <div class="wait" style="display:none">
+        <div>상대방을 기다리는 중...</div>
+        <button id="btnCancelRequest">취소</button>
+    </div>
+    <div class="chat" style="display:none">
+        <h1 style="font-family: 궁서체; justify-content: center; display: flex;">DGSW</h1>
+        <div class="chatResult"></div>
+        <input type="text" id="inputMessage" placeholder="전송할 내용을 입력하세요" class="input-medium uk-input chatting"/>
+        <button type="submit" class="uk-button uk-button-primary" id="btnChat">전송</button>
+    </div>
+</body>
+<script src="./index.js"></script>
+</html>
